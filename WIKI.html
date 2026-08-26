@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiki interactiva / Unidad 3 / Ingeniería de Software</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#007b99;
+    --azul-oscuro:#00566b;
+    --azul-suave:#e3f1f4;
+    --naranja:#f39200;
+    --naranja-suave:#fff2df;
+    --gris:#848585;
+    --gris-oscuro:#5c5d5d;
+    --gris-claro:#f4f4f3;
+    --gris-linea:#e2e2e0;
+    --texto:#2c2f31;
+    --blanco:#ffffff;
+    --c8:#00566b;
+    --c9:#007b99;
+    --c10:#2a95ad;
+    --c11:#5fb8cc;
+    --c12:#8fd0de;
+    --c13:#f39200;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;color:var(--texto);background:var(--blanco);-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:'Poppins',sans-serif;margin:0;}
+  a{color:inherit;}
+
+  .hero{position:relative;background:var(--azul);color:var(--blanco);overflow:hidden;padding:44px 40px 32px;}
+  .hero::before{content:"";position:absolute;right:-140px;top:-160px;width:400px;height:400px;border-radius:50%;border:88px solid var(--naranja);opacity:.9;}
+  .hero-inner{position:relative;z-index:2;max-width:820px;}
+  .eyebrow{font-family:'Poppins',sans-serif;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--naranja);font-weight:700;margin-bottom:10px;}
+  .hero h1{font-size:clamp(21px,3.3vw,28px);font-weight:700;line-height:1.2;max-width:700px;}
+  .hero p.lead{margin-top:10px;font-size:13.3px;line-height:1.55;color:rgba(255,255,255,.9);max-width:600px;}
+
+  .linea-tiempo{background:var(--blanco);border-bottom:1px solid var(--gris-linea);padding:20px 30px 16px;overflow-x:auto;}
+  .lt-track{display:flex;align-items:flex-start;gap:0;min-width:760px;max-width:1040px;margin:0 auto;position:relative;}
+  .lt-nodo{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;cursor:pointer;}
+  .lt-linea{position:absolute;top:17px;left:50%;width:100%;height:3px;background:var(--gris-linea);z-index:0;}
+  .lt-nodo:last-child .lt-linea{display:none;}
+  .lt-circulo{
+    width:34px;height:34px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--blanco);font-family:'Poppins',sans-serif;font-weight:700;font-size:12px;
+    position:relative;z-index:1;
+    border:3px solid var(--blanco);
+    box-shadow:0 0 0 2px var(--gris-linea);
+    transition:transform .15s ease;
+  }
+  .lt-nodo:hover .lt-circulo{transform:scale(1.1);}
+  .lt-nodo.activo .lt-circulo{box-shadow:0 0 0 3px var(--naranja);}
+  .lt-etiqueta{font-size:9.8px;font-weight:600;color:var(--gris-oscuro);margin-top:7px;text-align:center;max-width:95px;line-height:1.25;}
+  .lt-nodo.activo .lt-etiqueta{color:var(--azul-oscuro);font-weight:700;}
+
+  .barra-control{
+    position:sticky;top:0;z-index:30;
+    background:var(--blanco);
+    border-bottom:1px solid var(--gris-linea);
+    padding:12px 40px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .filtro-btn{
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
+    color:var(--gris-oscuro);background:var(--gris-claro);border:none;
+    padding:7px 12px;border-radius:20px;cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .filtro-btn:hover{background:var(--azul-suave);color:var(--azul-oscuro);}
+  .filtro-btn.activo{background:var(--azul);color:var(--blanco);}
+  .progreso-wrap{margin-left:auto;display:flex;align-items:center;gap:9px;}
+  .progreso-txt{font-size:11px;color:var(--gris);white-space:nowrap;}
+  .progreso-barra{width:100px;height:7px;background:var(--gris-claro);border-radius:10px;overflow:hidden;}
+  .progreso-fill{height:100%;background:linear-gradient(90deg,var(--azul),var(--naranja));width:0%;border-radius:10px;transition:width .3s ease;}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:24px 40px 60px;}
+
+  .aviso{background:var(--naranja-suave);border-left:4px solid var(--naranja);border-radius:8px;padding:13px 17px;margin-bottom:20px;font-size:12.2px;line-height:1.55;color:#5c4426;}
+  .aviso b{color:#a35f00;}
+
+  .grid-casos{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+
+  .entrada{border:1px solid var(--gris-linea);border-radius:14px;overflow:hidden;background:var(--blanco);transition:box-shadow .15s ease;}
+  .entrada:hover{box-shadow:0 10px 26px rgba(0,86,107,.1);}
+
+  .entrada-head{padding:15px 17px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;}
+  .entrada.pendiente .entrada-head{cursor:default;}
+
+  .icono-etapa{flex:0 0 auto;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--blanco);}
+  .icono-etapa svg{width:19px;height:19px;}
+
+  .semana-tag{display:inline-block;font-family:'Poppins',sans-serif;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:20px;margin-bottom:4px;color:var(--blanco);}
+
+  .entrada-info{flex:1;}
+  .entrada-info .tt{font-size:13.2px;font-weight:700;color:var(--texto);line-height:1.32;}
+  .entrada.pendiente .entrada-info .tt{color:var(--gris);}
+  .entrada-info .sub{font-size:10.8px;color:var(--gris);margin-top:2px;}
+
+  .chevron{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--gris-claro);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gris-oscuro);transition:transform .2s ease;margin-top:2px;}
+  .entrada.abierta .chevron{transform:rotate(180deg);background:var(--azul);color:var(--blanco);}
+
+  .entrada-body{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(--gris-claro);}
+  .entrada.abierta .entrada-body{max-height:960px;}
+
+  .campo{padding:10px 17px;border-top:1px solid var(--gris-linea);}
+  .campo .k{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;color:var(--naranja);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+  .campo .v{font-size:11.6px;color:#3a3d3e;line-height:1.48;}
+  .campo .v a{color:var(--azul);font-weight:600;}
+
+  .entrada.pendiente{background:var(--gris-claro);border-style:dashed;}
+  .pendiente-txt{padding:0 17px 15px;font-size:11.5px;color:var(--gris);line-height:1.5;}
+
+  .pie{background:var(--gris-claro);padding:22px 40px;text-align:center;margin-top:24px;border-radius:12px;}
+  .pie .marca{font-family:'Poppins',sans-serif;font-weight:700;color:var(--azul);font-size:12px;}
+  .pie .marca span{color:var(--naranja);}
+  .pie p{font-size:11px;color:var(--gris);margin:6px auto 0;max-width:600px;line-height:1.48;}
+
+  @media(max-width:760px){
+    .hero{padding:34px 20px 26px;}
+    .linea-tiempo{padding:16px 16px 14px;}
+    .barra-control{padding:10px 20px;}
+    .wrap{padding:20px 20px 50px;}
+    .grid-casos{grid-template-columns:1fr;}
+    .progreso-wrap{margin-left:0;width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Ingeniería de Sistemas · Nivel VII · Ingeniería de Software</div>
+    <h1>Wiki interactiva, Unidad 3, requerimientos y modelamientos</h1>
+    <p class="lead">Explora las seis semanas de la unidad, desde cómo se descubre un requerimiento hasta cómo se integra al proyecto, abre cada caso real y sigue el progreso de las entradas.</p>
+  </div>
+</div>
+
+<div class="linea-tiempo">
+  <div class="lt-track" id="linea">
+    <div class="lt-nodo activo" data-semana="s8">
+      <div class="lt-linea"></div>
+      <div class="lt-circulo" style="background:var(--c8)">1</div>
+      <div class="lt-etiqueta">Elicitación, semana 8</div>
+    </div>
+    <div class="lt-nodo" data-semana="s9">
+      <div class="lt-linea"></div>
+      <div class="lt-circulo" style="background:var(--c9)">2</div>
+      <div class="lt-etiqueta">Requerimientos e historias, semana 9</div>
+    </div>
+    <div class="lt-nodo" data-semana="s10">
+      <div class="lt-linea"></div>
+      <div class="lt-circulo" style="background:var(--c10)">3</div>
+      <div class="lt-etiqueta">Casos de uso, semana 10</div>
+    </div>
+    <div class="lt-nodo" data-semana="s11">
+      <div class="lt-linea"></div>
+      <div class="lt-circulo" style="background:var(--c11)">4</div>
+      <div class="lt-etiqueta">Estado y estructura, semana 11</div>
+    </div>
+    <div class="lt-nodo" data-semana="s12">
+      <div class="lt-linea"></div>
+      <div class="lt-circulo" style="background:var(--c12);color:var(--azul-oscuro)">5</div>
+      <div class="lt-etiqueta">Secuencia, semana 12</div>
+    </div>
+    <div class="lt-nodo" data-semana="s13">
+      <div class="lt-circulo" style="background:var(--c13)">6</div>
+      <div class="lt-etiqueta">Integración, semana 13</div>
+    </div>
+  </div>
+</div>
+
+<div class="barra-control" id="barra">
+  <button class="filtro-btn activo" data-filtro="todas">Todas las etapas</button>
+  <button class="filtro-btn" data-filtro="s8">Semana 8</button>
+  <button class="filtro-btn" data-filtro="s9">Semana 9</button>
+  <button class="filtro-btn" data-filtro="s10">Semana 10</button>
+  <button class="filtro-btn" data-filtro="s11">Semana 11</button>
+  <button class="filtro-btn" data-filtro="s12">Semana 12</button>
+  <button class="filtro-btn" data-filtro="s13">Semana 13</button>
+  <button class="filtro-btn" data-filtro="equipo">Espacios de equipo</button>
+  <div class="progreso-wrap">
+    <span class="progreso-txt" id="progreso-txt"></span>
+    <div class="progreso-barra"><div class="progreso-fill" id="progreso-fill"></div></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="aviso"><b>Cómo explorar esta wiki:</b> haz clic en cualquier nodo de la línea de tiempo o en cualquier entrada para abrirla. Las entradas marcadas como pendientes son el espacio donde cada equipo documenta su propio avance de la semana.</div>
+
+  <div class="grid-casos" id="grid">
+
+    <div class="entrada" data-semana="s8" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c8)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c8)">Semana 8</span>
+          <div class="tt">IDEO, descubrir lo que el usuario no dice</div>
+          <div class="sub">Etapa: técnicas de elicitación</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">IDEO, consultora global de diseño e innovación.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Fundada en 1991, en Palo Alto, por la fusión de cuatro estudios de diseño.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Diseñar productos y servicios a partir de necesidades reales de las personas, no de suposiciones internas.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Popularizaron la observación directa y la entrevista profunda como técnicas de elicitación, con proyectos icónicos como el mouse de Apple.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Preguntar qué necesita alguien rara vez basta, hay que observar cómo trabaja de verdad.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">Antes de asumir un requerimiento, hay que verificarlo con quien realmente va a usar el sistema.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://www.ideo.com" target="_blank" rel="noopener">ideo.com</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada" data-semana="s9" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c9)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c9)">Semana 9</span>
+          <div class="tt">Mountain Goat Software, historias que caben en una tarjeta</div>
+          <div class="sub">Etapa: requerimientos e historias de usuario</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">Mountain Goat Software, consultora de Mike Cohn, cofundador de Agile Alliance y Scrum Alliance.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Publicó User Stories Applied en 2004, hoy referencia estándar de la industria.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Un formato de requerimiento breve, centrado en el usuario, que cupiera en una tarjeta física.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Definió el criterio INVEST, independiente, negociable, valiosa, estimable, pequeña y verificable, hoy usado en miles de equipos ágiles.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Una historia de usuario no reemplaza la conversación con el usuario, la provoca.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">Una historia de usuario que no se puede probar ni estimar todavía no está lista para el equipo.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://www.mountaingoatsoftware.com/agile/user-stories" target="_blank" rel="noopener">mountaingoatsoftware.com, user stories</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada" data-semana="s10" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c10)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c10)">Semana 10</span>
+          <div class="tt">Lucidchart, diagramar en equipo sin chocar</div>
+          <div class="sub">Etapa: casos de uso y actividades</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">Lucidchart, producto de Lucid Software.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Plataforma de diagramación colaborativa usada por equipos técnicos y de negocio en todo el mundo.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Que varias personas puedan construir un mismo diagrama UML a la vez, sin perder versiones ni claridad.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Se convirtió en una de las herramientas más usadas para diagramas de casos de uso y de actividades en equipos distribuidos.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Un diagrama que solo una persona entiende no cumple su función de comunicar.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">El diagrama de casos de uso debe poder explicarse a alguien del equipo que no lo dibujó.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://www.lucidchart.com" target="_blank" rel="noopener">lucidchart.com</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada" data-semana="s11" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c11)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c11)">Semana 11</span>
+          <div class="tt">PlantUML, diagramas escritos como código</div>
+          <div class="sub">Etapa: diagrama de estado y modelos estructurales</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">PlantUML, proyecto de código abierto.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Herramienta que genera diagramas UML a partir de texto plano, integrada hoy en editores y wikis de código.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Que un diagrama de estado o de clases pudiera versionarse junto con el código, como cualquier archivo de texto.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Se volvió estándar en equipos que prefieren describir un diagrama con líneas de texto en vez de arrastrar figuras.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Si el diagrama vive en un archivo de texto, su historial de cambios queda tan trazable como el del código.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">Un diagrama de estado desactualizado es tan peligroso como un requerimiento desactualizado.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://plantuml.com" target="_blank" rel="noopener">plantuml.com</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada" data-semana="s12" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c12);color:var(--azul-oscuro)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00566b" stroke-width="2"><path d="M4 4h16v4H4zM4 10h16v4H4zM4 16h16v4H4z"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c12);color:var(--azul-oscuro)">Semana 12</span>
+          <div class="tt">Stripe, un orden exacto para cada pago</div>
+          <div class="sub">Etapa: diagrama de secuencia y colaboración</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">Stripe, plataforma de pagos en línea.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Fundada en 2010, procesa pagos para millones de negocios en todo el mundo.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Que cualquier desarrollador entienda, sin ambigüedad, el orden exacto de los mensajes en una transacción.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Es reconocida en la industria por documentar sus flujos de interacción con un nivel de detalle casi idéntico a un diagrama de secuencia.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Cuando dinero real depende del orden de los mensajes, la ambigüedad deja de ser un detalle menor.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">Cualquier operación crítica del sistema merece un diagrama de secuencia explícito, no una suposición compartida.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://docs.stripe.com" target="_blank" rel="noopener">docs.stripe.com</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada" data-semana="s13" data-tipo="fija">
+      <div class="entrada-head" onclick="toggle(this)">
+        <div class="icono-etapa" style="background:var(--c13)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 3h4a2 2 0 0 1 2 2v4M15 21h4a2 2 0 0 0 2-2v-4"/></svg>
+        </div>
+        <div class="entrada-info">
+          <span class="semana-tag" style="background:var(--c13)">Semana 13</span>
+          <div class="tt">Jama Software, que ningún requerimiento se pierda</div>
+          <div class="sub">Etapa: integración de la ingeniería de requerimientos</div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="entrada-body">
+        <div class="campo"><div class="k">Organización</div><div class="v">Jama Software, empresa de gestión de requerimientos.</div></div>
+        <div class="campo"><div class="k">Año y contexto</div><div class="v">Su plataforma ha sido usada en más de 40,000 proyectos de industrias como aeroespacial, médica y automotriz.</div></div>
+        <div class="campo"><div class="k">Qué se esperaba lograr</div><div class="v">Que cada requerimiento se pueda rastrear, en tiempo real, desde que se escribe hasta que se prueba en el sistema final.</div></div>
+        <div class="campo"><div class="k">Qué ocurrió</div><div class="v">Demostraron con datos reales que los equipos con mejor trazabilidad de requerimientos entregan más rápido y con menos errores.</div></div>
+        <div class="campo"><div class="k">Idea central</div><div class="v">Un requerimiento que nadie puede rastrear hasta el código es, en la práctica, un requerimiento que se perdió.</div></div>
+        <div class="campo"><div class="k">Lección para nuestro proyecto</div><div class="v">La fase 2 del proyecto debe poder mostrar de qué requerimiento salió cada diagrama y cada línea de código.</div></div>
+        <div class="campo"><div class="k">Fuente</div><div class="v"><a href="https://www.jamasoftware.com" target="_blank" rel="noopener">jamasoftware.com</a></div></div>
+      </div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s8" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 8</span><div class="tt">Espacio del equipo, registro de elicitación</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo documenta a quién entrevistó u observó, y qué técnica de elicitación usó para su propio proyecto.</div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s9" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 9</span><div class="tt">Espacio del equipo, historias de usuario</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo documenta sus historias de usuario, aplicando el criterio INVEST a su propio proyecto.</div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s10" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 10</span><div class="tt">Espacio del equipo, diagramas de comportamiento</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo enlaza su diagrama de casos de uso y de actividades del propio proyecto.</div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s11" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 11</span><div class="tt">Espacio del equipo, estado y estructura</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo enlaza su diagrama de estado y su diagrama estructural del propio proyecto.</div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s12" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 12</span><div class="tt">Espacio del equipo, secuencia y colaboración</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo enlaza su diagrama de secuencia y de colaboración del propio proyecto.</div>
+    </div>
+
+    <div class="entrada pendiente" data-semana="s13" data-tipo="equipo">
+      <div class="entrada-head">
+        <div class="icono-etapa" style="background:var(--gris)"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+        <div class="entrada-info"><span class="semana-tag" style="background:var(--gris)">Semana 13</span><div class="tt">Espacio del equipo, fase 2 del proyecto</div><div class="sub">Pendiente por completar</div></div>
+      </div>
+      <div class="pendiente-txt">Aquí cada equipo enlaza su entrega de fase 2, mostrando cómo cada requerimiento se conecta con un diagrama y con el código.</div>
+    </div>
+
+  </div>
+
+  <div class="pie">
+    <div class="marca">UNIVERSIDAD CATÓLICA <span>LUIS AMIGÓ</span></div>
+    <p>Facultad de Ingenierías y Arquitectura · Ingeniería de Sistemas. Wiki interactiva de la Unidad 3 del curso Ingeniería de Software, IS068. Los espacios de equipo se completan directamente en Moodle durante la semana correspondiente.</p>
+  </div>
+
+</div>
+
+<script>
+  function toggle(head){
+    const entrada = head.closest('.entrada');
+    if(entrada.classList.contains('pendiente')) return;
+    entrada.classList.toggle('abierta');
+  }
+
+  const botones = document.querySelectorAll('.filtro-btn');
+  const entradas = document.querySelectorAll('.entrada');
+  const nodos = document.querySelectorAll('.lt-nodo');
+
+  function aplicarFiltro(filtro){
+    entradas.forEach(e=>{
+      if(filtro === 'todas'){ e.style.display = ''; }
+      else if(filtro === 'equipo'){ e.style.display = e.dataset.tipo === 'equipo' ? '' : 'none'; }
+      else { e.style.display = e.dataset.semana === filtro ? '' : 'none'; }
+    });
+  }
+
+  botones.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      botones.forEach(b=>b.classList.remove('activo'));
+      btn.classList.add('activo');
+      aplicarFiltro(btn.dataset.filtro);
+      nodos.forEach(n=>n.classList.toggle('activo', n.dataset.semana === btn.dataset.filtro));
+    });
+  });
+
+  nodos.forEach(nodo=>{
+    nodo.addEventListener('click', ()=>{
+      const sem = nodo.dataset.semana;
+      botones.forEach(b=>b.classList.toggle('activo', b.dataset.filtro === sem));
+      aplicarFiltro(sem);
+      nodos.forEach(n=>n.classList.toggle('activo', n===nodo));
+      document.querySelectorAll(`.entrada[data-semana="${sem}"][data-tipo="fija"]`).forEach(e=>e.classList.add('abierta'));
+    });
+  });
+
+  const totalEtapas = 6;
+  const etapasCompletas = new Set();
+  document.querySelectorAll('.entrada[data-tipo="fija"]').forEach(e=>etapasCompletas.add(e.dataset.semana));
+  const pct = Math.round((etapasCompletas.size/totalEtapas)*100);
+  document.getElementById('progreso-fill').style.width = pct + '%';
+  document.getElementById('progreso-txt').textContent = `${etapasCompletas.size} de ${totalEtapas} etapas documentadas`;
+</script>
+
+</body>
+</html>
